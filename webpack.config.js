@@ -1,86 +1,110 @@
-const path = require('path'); //path del proyecto principal
-const HtmlWebpackPlugin = require('html-webpack-plugin'); //traemos el plugin
+const path = require('path');
+const HtmlWebPackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { Component } = require('react');
-const { dirname } = require('path');
-//de html
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 module.exports = {
-  entry: './src/index.js', // punto de entrada
+  entry: './src/index.js',
   output: {
-    // lugar al que saldrán todos los archivos
-    path: path.resolve(__dirname, 'dist'), //en nuestro path, crea la carpeta dist
-    filename: 'bundle.js', // nombre del archivo js resultante
-    publicPath: './',
+    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].bundle.js',
+    chunkFilename: '[name].bundle.js',
   },
-  mode: 'production',
   resolve: {
-    // extensión de archivos a tomar en cuenta
-    extensions: ['.js', '.jsx'],
+    extensions: ['.js', '.ts', '.tsx', '.jsx'],
     alias: {
+      '@hooks': path.resolve(__dirname, 'src/hooks/'),
+      '@icons': path.resolve(__dirname, 'src/assets/icons'),
+      '@logos': path.resolve(__dirname, 'src/assets/logos'),
+      '@routes': path.resolve(__dirname, 'src/routes/'),
+      '@styles': path.resolve(__dirname, 'src/styles/'),
+      '@assets': path.resolve(__dirname, 'src/assets/'),
+      '@context': path.resolve(__dirname, 'src/context/'),
       '@components': path.resolve(__dirname, 'src/components/'),
       '@containers': path.resolve(__dirname, 'src/containers/'),
-      '@pages': path.resolve(__dirname, 'src/pages/'),
-      '@styles': path.resolve(__dirname, 'src/styles/'),
-      '@icons': path.resolve(__dirname, 'src/assets/icons/'),
-      '@logos': path.resolve(__dirname, 'src/assets/logos/'),
-      '@hooks': path.resolve(__dirname, 'src/hooks/'),
-      '@context': path.resolve(__dirname, 'src/context'),
     },
   },
   module: {
-    // loaders para cada tipo de archivo
     rules: [
-      // reglas para usar
       {
-        test: /\.(js|jsx)$/, // extensiones en las cuales actuará babel
-        exclude: /node_modules/, // siempre excluir node modules
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
         use: {
-          // indicamos el loader
-          loader: 'babel-loader', // babel
+          loader: 'babel-loader',
         },
       },
       {
-        test: /\.html$/, // extensiones html
+        test: /\.html$/,
         use: [
           {
-            loader: 'html-loader', // loader para usar
+            loader: 'html-loader',
           },
         ],
       },
       {
-        test: /\.(css|scss)$/,
-        use: ['style-loader', 'css-loader', 'sass-loader'],
-      },
-      {
-        test: /\.(png|jp(e*)g|svg|gif)$/,
+        test: /\.css|.scss$/,
         use: [
           {
-            loader: 'file-loader',
-            options: {
-              name: 'images/[hash]-[name].[ext]',
-            },
+            loader: MiniCssExtractPlugin.loader,
           },
+          'css-loader',
+          'sass-loader',
         ],
+      },
+      {
+        test: /\.(png|jpg|svg)$/i,
+        type: 'asset',
+      },
+      {
+        test: /\.(tsx|ts)?$/,
+        exclude: '/node_modules/',
+        use: ['ts-loader'],
       },
     ],
   },
-  plugins: [
-    // plugins
-    new HtmlWebpackPlugin({
-      // instanciamos el plugin para html
-      template: './public/index.html', // archivo raíz a transformar
-      filename: './index.html', // el archivo resultante
-    }),
-    new MiniCssExtractPlugin({
-      filename: '[name].css',
-    }),
-  ],
   devServer: {
-    allowedHosts: path.join(__dirname, 'dist'), // contentBase corresponde a webpack 4, ahora en Webpack 5 se usa allowedHosts
-    port: 3006,
-    compress: true,
     historyApiFallback: true,
   },
+  plugins: [
+    new HtmlWebPackPlugin({
+      template: './public/index.html',
+      filename: './index.html',
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'assets/[name].css',
+    }),
+    new CleanWebpackPlugin(),
+    // new ImageMinimizerPlugin(),
+  ],
+  optimization: {
+    minimize: true,
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        default: false,
+        commons: {
+          // Elements for read resource
+          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+          chunks: 'all',
+          name: 'commons',
+          filename: 'assets/common.[chunkhash].js',
+          reuseExistingChunk: true,
+          enforce: true,
+          priority: 20,
+        },
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          chunks: 'all',
+          name: 'vendors',
+          filename: 'assets/vendor.[chunkhash].js',
+          reuseExistingChunk: true,
+          enforce: true,
+          priority: 10,
+        },
+      },
+    },
+  },
 };
-// webpack.config.js

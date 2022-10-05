@@ -2012,7 +2012,7 @@ const ProductList = ({ category }) => {
     );
   }, [category, setFilterProduct]);
 
-  return (gi
+  return (
     <section className="main-container">
       <div className="ProductList">
         {filterProduct.map((product) => (

@@ -13,7 +13,7 @@ module.exports = {
     filename: 'bundle.js', // nombre del archivo js resultante
     publicPath: './',
   },
-  mode: 'development',
+  mode: 'production',
   resolve: {
     // extensión de archivos a tomar en cuenta
     extensions: ['.js', '.jsx'],
